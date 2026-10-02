@@ -1,29 +1,43 @@
 using UnityEngine;
-using TMPro; // TextMeshPro 관련 기능 사용
+using TMPro;
 
 public class GameManager : MonoBehaviour
 {
-    public TextMeshProUGUI scoreText; // 화면에 보여줄 UI 텍스트
+    public TextMeshProUGUI scoreText;      // 시간 표시 UI
+    public GameObject gameOverText;        // GAME OVER 텍스트 오브젝트
+
     private float survivedTime = 0f;
     private bool isGameOver = false;
+
+    void Start()
+    {
+        // 시작 시 GAME OVER 문구가 꺼져있는지 한 번 더 확인
+        if (gameOverText != null)
+        {
+            gameOverText.SetActive(false);
+        }
+    }
 
     void Update()
     {
         if (isGameOver) return;
 
-        // 게임이 진행 중일 때 버틴 시간을 계속 더함
         survivedTime += Time.deltaTime;
 
-        // UI 텍스트 업데이트 (소수점 첫째 자리까지 표시)
         if (scoreText != null)
         {
             scoreText.text = survivedTime.ToString("F1") + "s";
         }
     }
 
-    // 게임 오버 호출용 함수
     public void GameOver()
     {
         isGameOver = true;
+
+        // 게임 오버 시 GAME OVER 텍스트 UI 켜기
+        if (gameOverText != null)
+        {
+            gameOverText.SetActive(true);
+        }
     }
 }
