@@ -37,19 +37,29 @@ public class PlayerController : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.GetComponent<Obstacle>() != null)
+        // 장애물과 부딪혔는지 확인
+        if (!isGameOver && collision.gameObject.GetComponent<Obstacle>() != null)
         {
             isGameOver = true;
-            Time.timeScale = 0f;
 
-            // GameManager를 찾아 게임 오버 상태를 알림
+            // GameManager 게임 오버 호출
             GameManager gm = FindFirstObjectByType<GameManager>();
             if (gm != null)
             {
                 gm.GameOver();
             }
 
-            Debug.Log("게임 오버! R 키를 눌러 다시 시작하세요.");
+            // 장애물 스포너 생성 정지 호출
+            ObstacleSpawner spawner = FindFirstObjectByType<ObstacleSpawner>();
+            if (spawner != null)
+            {
+                spawner.StopSpawning();
+            }
+
+            // 시간 정지
+            Time.timeScale = 0f;
+
+            // Debug.Log("게임 오버! 파티클 테스트 중."); <-- 이 줄을 지워주시면 됩니다!
         }
     }
 }
