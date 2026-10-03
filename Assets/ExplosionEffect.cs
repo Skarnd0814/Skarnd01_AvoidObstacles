@@ -1,56 +1,56 @@
 using UnityEngine;
-using System.Collections;
 
 public class ExplosionEffect : MonoBehaviour
 {
     [Header("시각 연출 설정")]
     public GameObject effectPrefab;
-    public float shakeMagnitude = 0.05f;
 
     [Header("사운드 연출 설정")]
-    public AudioClip explosionSFX; // <- 이 줄이 있어야 Inspector에 칸이 생깁니다!
-    [Range(0f, 1f)] public float soundVolume = 0.8f;
+    public AudioClip soundVolume; // 충돌 효과음 오디오 클립
+    [Range(0f, 1f)]
+    public float volume = 1.0f;   // 소리 크기 (기본값 1.0)
 
-    private bool hasExploded = false;
+    private AudioSource audioSource;
+
+    void Awake()
+    {
+        // 오브젝트에 AudioSource가 없으면 자동으로 추가
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+        }
+
+        // 2D 사운드 설정 및 시간 정지 영향 받지 않도록 고정
+        audioSource.spatialBlend = 0f; // 100% 2D 사운드로 설정
+        audioSource.playOnAwake = false;
+        audioSource.ignoreListenerPause = true; // 게임 일시정지 시에도 소리 출력
+    }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (!hasExploded && collision.gameObject.GetComponent<Obstacle>() != null)
+        if (collision.gameObject.GetComponent<Obstacle>() != null)
         {
-            hasExploded = true;
-
-            // 효과음 재생
-            if (explosionSFX != null)
-            {
-                AudioSource.PlayClipAtPoint(explosionSFX, Camera.main.transform.position, soundVolume);
-            }
-
-            // 파티클 생성
+            // 1. 파티클 이펙트 생성
             if (effectPrefab != null)
             {
-                Vector3 spawnPos = new Vector3(transform.position.x, transform.position.y, 0f);
-                Instantiate(effectPrefab, spawnPos, Quaternion.identity);
+                Instantiate(effectPrefab, transform.position, Quaternion.identity);
             }
 
-            // 카메라 흔들림
-            StartCoroutine(ShakeCamera());
+            // 2. 효과음(SFX) 확실한 2D 재생
+            if (soundVolume != null && audioSource != null)
+            {
+                audioSource.PlayOneShot(soundVolume, volume);
+            }
+
+            // 3. 게임 오버 및 시간 정지 처리
+            GameManager gm = FindFirstObjectByType<GameManager>();
+            if (gm != null) gm.GameOver();
+
+            ObstacleSpawner spawner = FindFirstObjectByType<ObstacleSpawner>();
+            if (spawner != null) spawner.StopSpawning();
+
+            Time.timeScale = 0f;
         }
-    }
-
-    IEnumerator ShakeCamera()
-    {
-        Vector3 originalPos = Camera.main.transform.position;
-        int shakeLoops = 10;
-
-        for (int i = 0; i < shakeLoops; i++)
-        {
-            float x = Random.Range(-1f, 1f) * shakeMagnitude;
-            float y = Random.Range(-1f, 1f) * shakeMagnitude;
-
-            Camera.main.transform.position = new Vector3(originalPos.x + x, originalPos.y + y, originalPos.z);
-            yield return null;
-        }
-
-        Camera.main.transform.position = originalPos;
     }
 }

@@ -10,6 +10,12 @@ public class PlayerController : MonoBehaviour
     public float dashDuration = 0.15f;
     public float dashCooldown = 3f;
 
+    [Header("사운드 연출")]
+    [Tooltip("플레이어 대시 효과음 오디오 클립을 연결하세요.")]
+    public AudioClip dashSFX;
+    [Range(0f, 1f)]
+    public float dashVolume = 1.0f;
+
     [Header("UI 연출")]
     public TextMeshProUGUI dashUIText;
 
@@ -19,7 +25,7 @@ public class PlayerController : MonoBehaviour
 
     private bool isDashing = false;
     private float dashTimeLeft;
-    private float lastDashTime = -999f;
+    private float lastDashTime = -999f; // 대시 쿨타임용 변수
     private float dashDirection = 1f;
 
     void Start()
@@ -60,7 +66,7 @@ public class PlayerController : MonoBehaviour
 
         if (isDashing)
         {
-            // Y축 기존 속도(통통 튀어오르는 물리력)를 그대로 유지합니다.
+            // Y축 기존 속도(통통 튀어오르는 물리력)를 그대로 유지
             rb.linearVelocity = new Vector2(dashDirection * dashSpeed, rb.linearVelocity.y);
             dashTimeLeft -= Time.fixedDeltaTime;
 
@@ -80,6 +86,14 @@ public class PlayerController : MonoBehaviour
         isDashing = true;
         dashTimeLeft = dashDuration;
         lastDashTime = Time.time;
+
+        // 대시 효과음 재생 (2D 위치 보정)
+        if (dashSFX != null && Camera.main != null)
+        {
+            Vector3 soundPos = Camera.main.transform.position;
+            soundPos.z = 0f;
+            AudioSource.PlayClipAtPoint(dashSFX, soundPos, dashVolume);
+        }
     }
 
     void EndDash()
